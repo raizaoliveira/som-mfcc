@@ -20,14 +20,13 @@ typedef struct _neuron
 
 typedef struct _map
 	{
-		neuron *lattice;
+	neuron *lattice;
     	int latice_size;
     	double mapRadius;
     	int sideX, sideY; 
     	int scale;
 	} map;
-
-void init_neuron(neuron *n, mfcc_frame *mfcc_frames, unsigned int n_frames, char *name);
+void init_neuron(neuron *n, int x, int y, mfcc_frame *mfcc_frames, unsigned int n_frames, char *name);
 
 map* init_map(int sideX, int sideY, int scale);
 

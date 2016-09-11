@@ -1,33 +1,35 @@
 #include "neuron.h"
+#define N_SAMPLES 10
+
+double min_dbl(double a, double b) { return a < b ? a : b; }
+double max_dbl(double a, double b) { return a > b ? a : b; }
 
 
-void init_neuron(neuron *n, int x, int y, mfcc_frame *mfcc_frames, unsigned int n_frames, char *name){
+void init_neuron(neuron *n, int x, int y, mfcc_frame *mfcc_frames,int n_frames, char *name){
 
-	double r;
-	register int i, j;
-	n->frames = mfcc_frames;
-	n->num_weights = n_frames;
-	n->x = x; 
-	n->y = y;
+    double r;
+    register int i, j;
+    n->num_weights = n_frames;
+    n->x = x; 
+    n->y = y;
+    n->name = malloc (strlen(name) * sizeof(char));
+    strcpy(n->name, name);
+    n->weights= malloc (n_frames * sizeof (double));
 
-	n->name = malloc (strlen(name) * sizeof(char));
-	strcpy(n->name, name);
-	n->weights= malloc (n_frames * sizeof (double));
-
-	for(i = 0; i < n_frames; i++)
-		for(j = 0; j < N_MFCC; j++)
-			n->weights[i] = mfcc_frames[i].features[j];
+    for(i = 0; i < n_frames; i++)
+        for(j = 0; j < N_MFCC; j++){
+            n->weights[i].features[j] = mfcc_frames[i].features[j];
+        }
   
-    printf("%s lattice %d, %d\n", n->name, n->x, n->y);
 }
 
 map* init_map(int sideX, int sideY, int scale){
-	register int i, x, y;
-	char *name = NULL;
-	void **word_adresses;
-	unsigned int n = 0, count = 0;
-	int aux = 0;
-	word *words = malloc(sizeof(word));
+    register int i, x, y;
+    char *name = NULL;
+    void **word_adresses;
+    unsigned int n = 0, count = 0;
+    int aux = 0;
+    word *words = malloc(sizeof(word));
 
     map *_map = malloc(sizeof(map));
     _map->latice_size = sideX * sideY;
@@ -38,111 +40,88 @@ map* init_map(int sideX, int sideY, int scale){
     mt_seed ();
 
     if ((n = get_list(words))){
-		word_adresses = malloc(n * sizeof(void *));
-		while (words != NULL){
-			x = mt_rand() %sideX;
-			y = mt_rand() %sideY;
-			printf("y : %d  x: %d\n", y, x);
-			init_neuron(_map->lattice + y * sideX + x, x, y, words->frames, words->n, words->name);
-				
-			word_adresses[count++] = words;		
-			words = words->next;
-		}
-		for (i = 0; i < count; i++)
-			free(word_adresses[i]);
-		free(word_adresses);
-		aux++;
-	}
+        word_adresses = malloc(n * sizeof(void *));
+        while (words != NULL){
+            x = mt_rand() %sideX;
+            y = mt_rand() %sideY;
+            init_neuron(_map->lattice + y * sideX + x, x, y, words->frames, words->n, words->name);
+                
+            word_adresses[count++] = words;     
+            words = words->next;
+        }
+        for (i = 0; i < count; i++)
+            free(word_adresses[i]);
+        free(word_adresses);
+        aux++;
+    }
     
     return _map;
 }
 
-/*void train(Map *m, int num_inputs, int numEpoch) 
-{
-    int iteration = 0;
-    double epsilon = EPSILON;
-    double timeCst = numEpoch / log(m->mapRadius); 
+double neuron_distance(neuron *n, Inputs *s){
+    register int i, j;
+    double val;
 
-    while(iteration < numEpoch) 
-    {
-        int input_chosen = rand() % num_inputs;
-        double *input = (inputs + input_chosen)->data; 
-        epoch(m, input, iteration, timeCst, &epsilon, numEpoch);  
-        ++iteration;
-        draw(display, m);
-        if(iteration % 100 == 0) 
-        {
-            printf("Epoch %d / %d\n", iteration, numEpoch);
+    val = 0;
+    for(i = 0; i < n->num_weights; ++i) {
+        for(j = 0; j < N_MFCC; j++){
+            val += (s->input[i].features[j] - n->weights[i].features[j]) * (s->input[i].features[j] - n->weights[i].features[j]);    
         }
+        
     }
-}
-
-
-double neuron_distance(Neuron *n, mfcc_frame *mfcc_frames2, unsigned int n2) 
-{
-    double val = 0;
-    register int i;
-  
-    for (j = 0; j < n2; j++)
-	{
-			
-		val = 0;/*Distancias euclidianas
-		for (k = 0; k < N_MFCC; k++)
-		{
-			val += pow(n->weights[k] - mfcc_frames2[j].features[k], 2);
-			
-		}
-		val = sqrt(distances[i + 1][j + 1]);
-	}
     return val;
 }
 
-int neuron_distance_to(Neuron *src, Neuron *dst) 
-{
+
+int neuron_distance_to(neuron *src, neuron *dst) {
     return (dst->x - src->x) * (dst->x - src->x)
         +  (dst->y - src->y) * (dst->y - src->y);
 }
 
 
 
-Neuron* find_bmu(Map *m, mfcc_frame *mfcc_frames2, unsigned int n2) 
-{
-    Neuron *n = m->lattice;
-    double min_val = neuron_distance(n, inputs);
+neuron* find_bmu(map *m, Inputs *inputs) {
 
-    for(int i = 1; i < m->latice_size; ++i) 
-    {
-        double curr = neuron_distance(&(m->lattice[i]), inputs);
+    double curr;
+    register int i;
+    double min_val;
+    neuron *n = m->lattice;
+    min_val = neuron_distance(n, inputs);
+
+    for(i = 1; i < m->latice_size; ++i){
+        curr = neuron_distance(&(m->lattice[i]), inputs);
         min_val = min_dbl(curr, min_val);
-        if(min_val == curr) { n = &(m->lattice[i]); }
+        if(min_val == curr){
+            n = &(m->lattice[i]);
+        }
     }
 
     return n;
 }
 
 
-void adjust_weights(Neuron *n, double *inputs, double epsilon, double theta) 
-{
-    for(int i = 0; i < n->num_weights; ++i) 
-    {
-        n->weights[i] += epsilon * theta * (inputs[i] - n->weights[i]);
+void adjust_weights(neuron *n, Inputs *in, double epsilon, double theta){
+    register int i, j;
+
+    for(i = 0; i < n->num_weights; ++i){
+        for(j = 0; j < N_MFCC; j++){
+            n->weights[i].features[j] += epsilon * theta * (in->input[i].features[j] - n->weights[i].features[j]);
+        }
     }
 }
 
-
-void train(Map *m, Training *inputs, int num_inputs, int numEpoch, SDL_Surface *display) 
-{
-    int iteration = 0;
+void train(map *m, Inputs *in, int numEpoch){
+    int iteration;
+    int input_chosen;
     double epsilon = EPSILON;
     double timeCst = numEpoch / log(m->mapRadius); 
 
+    iteration = 0;
+    printf("train linha 168\n");
     while(iteration < numEpoch) 
     {
-        int input_chosen = rand() % num_inputs;
-        double *input = (inputs + input_chosen)->data; 
-        epoch(m, input, iteration, timeCst, &epsilon, numEpoch);  
+        epoch(m, in, iteration, timeCst, &epsilon, numEpoch);  
         ++iteration;
-        draw(display, m);
         if(iteration % 100 == 0) 
         {
             printf("Epoch %d / %d\n", iteration, numEpoch);
@@ -151,38 +130,34 @@ void train(Map *m, Training *inputs, int num_inputs, int numEpoch, SDL_Surface *
 }
 
 
-double distance_between_weights(Neuron *src, Neuron *dst) 
+void epoch(map *m, Inputs *in, int iteration, double timeCst, double *epsilon, int numEpoch)
 {
-    double dist = 0;
-    for(int i = 0; i < src->num_weights; ++i)
-    {
-        dist += dst->weights[i] - src->weights[i];
-    }
-    return dist < 0 ? -dist : dist;
-}
+    register int i;
+    double radius;
+    int dst;
+    double theta;    
 
-void epoch(Map *m, double *inputs, int iteration, double timeCst, double *epsilon, int numEpoch)
-{
-    double radius = max_dbl(m->mapRadius * exp(-iteration / timeCst), 1); 
+    radius = max_dbl(m->mapRadius * exp(-iteration / timeCst), 1); 
     radius *= radius;
 
-    Neuron *n = find_bmu(m, inputs);
+    neuron *n = find_bmu(m, in);
 
-    for(int i = 0; i < m->latice_size; ++i)
+    for(i = 0; i < m->latice_size; ++i)
     {
-        int dst = neuron_distance_to(&(m->lattice[i]), n);
+        dst = neuron_distance_to(&(m->lattice[i]), n);
         
         if(dst < radius)
         {
-            double theta = exp(-dst / (2 * radius));
-            adjust_weights(&(m->lattice[i]), inputs, *epsilon, theta);
+            theta = exp(-dst / (2 * radius));
+            adjust_weights(&(m->lattice[i]), in, *epsilon, theta);
 
         }
         *epsilon = EPSILON * exp((double)-iteration / (numEpoch- iteration));  
     }
 }
 
-int get_node_quality(Map *m, int x, int y, Neuron *n)
+/*
+int get_node_quality(map *m, int x, int y, neuron *n)
 {
     double quality = 0.;
 
@@ -204,8 +179,20 @@ int get_node_quality(Map *m, int x, int y, Neuron *n)
 }
 
 
+void make_quality_map(map *m){
+    for(int y = 0; y < m->sideY; ++y)
+        for(int x = 0; x < m->sideX; ++x) { 
+            int quality = get_node_quality(m, x, y, m->lattice + y * m->sideX +x);
+            int grayscale = 255 / (1 + quality);
+            for (size_t k = 0; k < (size_t)m->scale; k++)
+                for (size_t l = 0; l < (size_t)m->scale; l++)
+                    setPixel(display, x * m->scale  + k, y * m->scale + l, grayscale, grayscale, grayscale);
+        }
+    
+}
+*/
 
-void destroy_map(Map *m) 
+void destroy_map(map *m) 
 {
     for(int i = 0; i < m->latice_size; ++i)
     {
@@ -213,4 +200,4 @@ void destroy_map(Map *m)
     }
     free(m->lattice);
     free(m);
-}*/
+}

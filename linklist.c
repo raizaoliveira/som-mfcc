@@ -1,6 +1,7 @@
 
 #include "linklist.h"
 
+
 void new_word(mfcc_frame *frames, unsigned int n, char *name)
 {
 	FILE *f = NULL;
@@ -15,6 +16,7 @@ void new_word(mfcc_frame *frames, unsigned int n, char *name)
 	chdir("..");
 }
 
+
 int get_list(word *head)
 {
 	DIR *d = opendir("palavras");
@@ -28,6 +30,7 @@ int get_list(word *head)
 	{
 		if (!memcmp(dentry->d_name, ".", 1))
 		{
+			/*enquanto houver arquivo na pasta carregar para buffer*/
 			dentry = readdir(d);
 			continue;
 		}
@@ -50,9 +53,11 @@ int get_list(word *head)
 		{
 			head->next = malloc(sizeof(word));
 			head = head->next;
+
 		}
 	}
-	chdir("..");
 
+	chdir("..");
 	return count;
 }
+

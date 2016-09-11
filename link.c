@@ -42,32 +42,7 @@ void get_word(int flag)
 		else
 		{
 			/*laço de reconhecimento*/	
-			puts("analisando dados...");
-			word *words = malloc(sizeof(word));
-			double best = 1e10;
-			char *name = NULL;
-			void **word_adresses;
-			unsigned int n = 0, i = 0, count = 0;
-			if ((n = get_list(words)))
-			{
-				word_adresses = malloc(n * sizeof(void *));
-				while (words != NULL)
-				{
-					double now = compare(mfcc_frames, frame_n, words->frames, words->n);
-					word_adresses[count++] = words;
-					if (now < best)
-					{
-						best = now;
-						name = words->name;
-					}
-					words = words->next;
-				}
-				for (i = 0; i < count; i++)
-					free(word_adresses[i]);
-				free(word_adresses);
-			}
-			if (best < 3.5)
-				printf("%f %s", best, name);
+			puts("reconhece por som");
 		}
 		free(mfcc_frames);
 		free(frames);

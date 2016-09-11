@@ -10,6 +10,7 @@ Universidade estadual de Mato Grosso do Sul - UEMS
 #include "preprocessing.h"
 #include <dirent.h>
 
+
 typedef
 	struct _word
 	{
@@ -21,6 +22,8 @@ typedef
 
 
 void new_word(mfcc_frame *frames, unsigned int n, char *name);
+
+void new_sample_word(word new_sample);
 
 int get_list(word *head);
 

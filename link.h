@@ -3,7 +3,6 @@
 
 #include "linklist.h"
 #include "preprocessing.h"
-#include "compare.h"
 #include "neuron.h"
 
 void get_word(int flag);

@@ -5,6 +5,8 @@
 #include "preprocessing.h"
 #include "neuron.h"
 
-void get_word(int flag);
+void get_word();
+
+Inputs *copy(mfcc_frame *mfcc_frames, int n_frames, char *name);
 
 #endif

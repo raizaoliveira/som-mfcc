@@ -47,14 +47,15 @@ int get_list(word *head)
 
 		dentry = readdir(d);
 		count++;
-
 		head->next = NULL;
+
 		if (dentry != NULL && memcmp(dentry->d_name, ".", 2) && memcmp(dentry->d_name, "..", 3))
 		{
 			head->next = malloc(sizeof(word));
 			head = head->next;
 
 		}
+
 	}
 
 	chdir("..");

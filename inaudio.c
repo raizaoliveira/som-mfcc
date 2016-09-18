@@ -28,17 +28,18 @@ static char header[45] = "RIFF1024WAVEfmt 10241212102410241212data1024";
 /*funcao que captura o audio -> buffer
 Verificação dos parametros de hardware
 */
-int capture_start(const char *device)
+int capture_start()
 {
-	printf("funcao-> capture_start\n");
 	unsigned int freq = WAVE_SAMPLE_RATE;
 	int freq_adjust_direction = 1;
 	snd_pcm_hw_params_t *hw_params = NULL;
 	pthread_t t;
+	printf("funcao-> capture_start\n");
 
-	if (snd_pcm_open(&handle, !device ? "default" : device, SND_PCM_STREAM_CAPTURE, 0) < 0)
+
+	if (snd_pcm_open(&handle, "default", SND_PCM_STREAM_CAPTURE, 0) < 0)
 	{
-		fprintf(stderr, "Nao foi possivel abrir dispositivo %s\n", !device ? "default" : device);
+		fprintf(stderr, "Nao foi possivel abrir dispositivo %s\n", "default");
 		return -1;
 	}
 
@@ -69,6 +70,7 @@ int capture_start(const char *device)
 		fprintf(stderr, "Falha ao definir a freqüência\n");
 		return -6;
 	}
+
 	if (snd_pcm_hw_params_set_channels(handle, hw_params, WAVE_CHANNELS) < 0)
 	{
 		fprintf(stderr, "Falha ao definir o número de canais\n");
@@ -103,7 +105,7 @@ int capture_start(const char *device)
 	return 0;
 }
 
-void capture(void)
+void capture()
 {
 	printf("funcao-> capture\n");
 	struct block *now = NULL;

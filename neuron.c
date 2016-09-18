@@ -9,6 +9,7 @@ void init_neuron(neuron *n, int x, int y, mfcc_frame *mfcc_frames,int n_frames, 
 
     double r;
     register int i, j;
+    printf("init neuron\n");
     n->num_weights = n_frames;
     n->x = x; 
     n->y = y;
@@ -24,39 +25,44 @@ void init_neuron(neuron *n, int x, int y, mfcc_frame *mfcc_frames,int n_frames, 
 }
 
 map* init_map(int sideX, int sideY, int scale){
-    register int i, x, y;
-    char *name = NULL;
-    void **word_adresses;
-    unsigned int n = 0, count = 0;
-    int aux = 0;
-    word *words = malloc(sizeof(word));
 
+    int x, y;
+    unsigned int i, count = 0;
+    int aux = 0;
+    unsigned int n;
+    void **word_adresses;
+    word *pt_aux = malloc(sizeof(word));;
     map *_map = malloc(sizeof(map));
     _map->latice_size = sideX * sideY;
     _map->sideX       = sideX;
     _map->sideY       = sideY; 
     _map->scale       = scale;
-    _map->lattice     = malloc(_map->latice_size * sizeof(neuron));
+    _map->lattice     = malloc(_map->latice_size * sizeof( neuron));
     mt_seed ();
 
-    if ((n = get_list(words))){
+    if ((n = get_list(pt_aux)))
+    {
+        printf("n: %d\n", n);
         word_adresses = malloc(n * sizeof(void *));
-        while (words != NULL){
+        while (pt_aux != NULL)
+        {
             x = mt_rand() %sideX;
             y = mt_rand() %sideY;
-            init_neuron(_map->lattice + y * sideX + x, x, y, words->frames, words->n, words->name);
-                
-            word_adresses[count++] = words;     
-            words = words->next;
+            init_neuron(_map->lattice, x, y, pt_aux->frames, pt_aux->n, pt_aux->name);
+            word_adresses[count++] = pt_aux;
+            pt_aux = pt_aux->next;
         }
+        printf("count: %d\n", count);
         for (i = 0; i < count; i++)
             free(word_adresses[i]);
         free(word_adresses);
-        aux++;
     }
-    
+
     return _map;
 }
+
+
+
 
 double neuron_distance(neuron *n, Inputs *s){
     register int i, j;
@@ -124,7 +130,7 @@ void train(map *m, Inputs *in, int numEpoch){
         ++iteration;
         if(iteration % 100 == 0) 
         {
-            printf("Epoch %d / %d\n", iteration, numEpoch);
+            //printf("Epoch %d / %d\n", iteration, numEpoch);
         }
     }
 }
@@ -156,48 +162,13 @@ void epoch(map *m, Inputs *in, int iteration, double timeCst, double *epsilon, i
     }
 }
 
-/*
-int get_node_quality(map *m, int x, int y, neuron *n)
-{
-    double quality = 0.;
 
-    if(x != 0) { // left Neuron (if exists)  
-        quality += neuron_distance_to(n, &(m->lattice[y * m->sideX + x - 1])); 
-    }
-    if(x != m->sideX - 1) { //right Neuron
-        quality += neuron_distance_to(n, &(m->lattice[y * m->sideX + x + 1])); 
-
-    }
-    if(y != 0) { // top neuron  
-        quality += neuron_distance_to(n, &(m->lattice[(y - 1) * m->sideX + x])); 
-    }
-    if(y != m->sideY - 1) { // bottom Neuron
-        quality += neuron_distance_to(n, &(m->lattice[(y + 1) * m->sideX + x])); 
-    }
-
-    return quality;
-}
-
-
-void make_quality_map(map *m){
-    for(int y = 0; y < m->sideY; ++y)
-        for(int x = 0; x < m->sideX; ++x) { 
-            int quality = get_node_quality(m, x, y, m->lattice + y * m->sideX +x);
-            int grayscale = 255 / (1 + quality);
-            for (size_t k = 0; k < (size_t)m->scale; k++)
-                for (size_t l = 0; l < (size_t)m->scale; l++)
-                    setPixel(display, x * m->scale  + k, y * m->scale + l, grayscale, grayscale, grayscale);
-        }
-    
-}
-*/
 
 void destroy_map(map *m) 
 {
-    for(int i = 0; i < m->latice_size; ++i)
-    {
-        free(m->lattice[i].weights);
-    }
+    register int i;
+    //for(i = 0; i < m->latice_size; ++i)
+        //free(m->lattice[i].weights);
     free(m->lattice);
     free(m);
 }

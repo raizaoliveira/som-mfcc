@@ -32,9 +32,9 @@ taxa de gravação de 44100 (equivalente a qualidade de CDs)
 #define WAVE_BYTES_PER_SECOND (WAVE_SAMPLE_RATE * WAVE_FRAME_SIZE) //framesize * samplerate
 
 
-int capture_start(const char *device);
+int capture_start();
 
-void capture(void);
+void capture();
 
 void capture_stop(unsigned int *size, void **buffer);
 
